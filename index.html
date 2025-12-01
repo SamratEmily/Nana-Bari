@@ -23,13 +23,21 @@
         <button class="btn" onclick="showSection('kobita')">কবিতা / স্মৃতিকথা</button>
         <button class="btn" onclick="showSection('puroshkar')">পুরস্কার বিতরণ</button>
         <button class="btn" onclick="showSection('deyalikha')">দেয়ালিকা</button>
-        <button class="btn ghost" onclick="clearAll()">Local ডেটা মুছুন</button>
+        <button class="btn ghost" onclick="logout()" style="margin-left: auto;">লগআউট</button>
       </div>
 
       <section id="chobi">
         <h2>ছবি (Gallery)</h2>
         <p>নতুন ছবি যোগ করতে নিচের বাটন ব্যবহার করুন।</p>
-        <input type="file" id="imageInput" accept="image/*" multiple>
+        <div class="upload-container" style="text-align: center; margin-bottom: 2rem;">
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <label for="imageInput" class="btn" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          ছবি নির্বাচন করুন
+        </label>
+        <span id="fileName" style="margin-left: 10px; color: var(--text-secondary);">কোন ছবি নির্বাচন করা হয়নি</span>
+        <button id="uploadBtn" class="btn" style="margin-left: 10px; background: var(--secondary); display: none;">আপলোড করুন</button>
+      </div>
         <div style="height:10px"></div>
         <div class="gallery" id="gallery"></div>
       </section>
@@ -88,14 +96,15 @@
   </div>
 
   <footer>
-    নানার বাড়ি ওয়েবপেজ 
+    © ২০২৫ নানার বাড়ি — সবার স্মৃতি, সবার আনন্দ
   </footer>
-</body>
-  <script src="js/script.js"></script>
-  <!-- Front page image added -->
-  <section id="front-image" style="text-align:center; margin-top:20px;">
-    <img src="front.jpeg" alt="Front Image" style="width:100%; max-height:500px; object-fit:cover; border-radius:10px;">
-    <h1 style="position:relative; top:-120px; color:white; font-size:48px; text-shadow:2px 2px 6px black;">নানার বাড়ি</h1>
-  </section>
 
+  <!-- Lightbox for viewing images -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="Full view">
+  </div>
+
+  <script src="js/script.js"></script>
+</body>
 </html>
