@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>নানার বাড়ি</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="hero" background="url(assets/bridge.jpeg)">
+    <div class="overlay"></div>
+    <div class="title-box">
+      <h1>নানার বাড়ি</h1>
+      <p class="lead">ছবি, কবিতা, স্মৃতিকথা—এখানেই রাখুন আপনার ভালোলাগা</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="main">
+      <div class="top-actions">
+        <button class="btn" onclick="showSection('chobi')">ছবি দেখুন / যোগ করুন</button>
+        <button class="btn" onclick="showSection('kobita')">কবিতা / স্মৃতিকথা</button>
+        <button class="btn" onclick="showSection('puroshkar')">পুরস্কার বিতরণ</button>
+        <button class="btn" onclick="showSection('deyalikha')">দেয়ালিকা</button>
+        <button class="btn ghost" onclick="clearAll()">Local ডেটা মুছুন</button>
+      </div>
+
+      <section id="chobi">
+        <h2>ছবি (Gallery)</h2>
+        <p>নতুন ছবি যোগ করতে নিচের বাটন ব্যবহার করুন।</p>
+        <input type="file" id="imageInput" accept="image/*" multiple>
+        <div style="height:10px"></div>
+        <div class="gallery" id="gallery"></div>
+      </section>
+
+      <section id="kobita">
+        <h2>কবিতা / স্মৃতিকথা</h2>
+        <p>নিচে বাংলা কবিতা বা স্মৃতিকথা লিখে 'সংরক্ষণ' করুন।</p>
+        <label>শিরোনাম</label>
+        <input type="text" id="poemTitle" placeholder="কবিতের নাম / স্মৃতিকথার শিরোনাম">
+        <label>কবিতা / স্মৃতিকথা</label>
+        <textarea id="poemBody" rows="6" placeholder="এখানে বাংলায় লিখুন..."></textarea>
+        <div style="margin-top:0.5rem">
+          <button class="btn" onclick="savePoem()">সংরক্ষণ</button>
+        </div>
+        <hr>
+        <div id="poemList"></div>
+      </section>
+
+      <section id="puroshkar">
+        <h2>পুরস্কার বিতরণ</h2>
+        <p>এখানে পুরস্কার তালিকা যোগ করুন (উদাহরণ: বর্ষসেরা কবিতা, শ্রেষ্ঠ চিত্র, ইত্যাদি)</p>
+        <label>পুরস্কারের নাম</label>
+        <input type="text" id="awardName">
+        <label>বর্ণনা</label>
+        <input type="text" id="awardDesc">
+        <div style="margin-top:0.5rem"><button class="btn" onclick="addAward()">যোগ করুন</button></div>
+        <div id="awardList" style="margin-top:0.75rem"></div>
+      </section>
+
+      <section id="deyalikha">
+        <h2>দেয়ালিকা</h2>
+        <p>আপনার নাম ও বার্তা রেখে যান।</p>
+        <label>নাম</label>
+        <input type="text" id="gbName">
+        <label>বার্তা</label>
+        <textarea id="gbMessage" rows="3"></textarea>
+        <div style="margin-top:0.5rem"><button class="btn" onclick="addGuestbook()">পাঠান</button></div>
+        <hr>
+        <div id="gbList"></div>
+      </section>
+
+    </div>
+
+    <aside class="side">
+      <h3>নেভিগেশন</h3>
+      <div class="menu" id="menu">
+        <button onclick="showSection('chobi')" id="m-chobi">ছবি</button>
+        <button onclick="showSection('kobita')" id="m-kobita">কবিতা/স্মৃতিকথা</button>
+        <button onclick="showSection('puroshkar')" id="m-puroshkar">পুরস্কার বিতরণ</button>
+        <button onclick="showSection('deyalikha')" id="m-deyalikha">দেয়ালিকা</button>
+      </div>
+
+      <hr>
+     
+    </aside>
+  </div>
+
+  <footer>
+    নানার বাড়ি ওয়েবপেজ 
+  </footer>
+</body>
+  <script src="js/script.js"></script>
+  <!-- Front page image added -->
+  <section id="front-image" style="text-align:center; margin-top:20px;">
+    <img src="front.jpeg" alt="Front Image" style="width:100%; max-height:500px; object-fit:cover; border-radius:10px;">
+    <h1 style="position:relative; top:-120px; color:white; font-size:48px; text-shadow:2px 2px 6px black;">নানার বাড়ি</h1>
+  </section>
+
+</html>
