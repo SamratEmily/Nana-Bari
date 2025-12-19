@@ -63,10 +63,18 @@ function showSection(id){
     uploadBtn.disabled = true;
 
     try {
-      // Compress image before upload (max 1200px width, 0.8 quality)
-      // Increased quality/size since we are now saving to disk
-      const compressedData = await compressImage(selectedFile, 1200, 0.8);
-      await addImageToGallery(compressedData);
+      // Compress image before upload (max 800px width, 0.7 quality)
+      // We need aggressive compression for DB storage to avoid packet size limits
+      const compressedData = await compressImage(selectedFile, 800, 0.7);
+      
+      // Check size of base64 string
+      if (compressedData.length > 5 * 1024 * 1024) {
+         throw new Error("ছবির সাইজ অনেক বেশি। অনুগ্রহ করে ছোট ছবি ব্যবহার করুন।");
+      }
+
+      const success = await addImageToGallery(compressedData);
+      
+      if (!success) return;
       
       // Reset UI
       imageInput.value = '';
@@ -76,7 +84,7 @@ function showSection(id){
       alert('ছবি সফলভাবে আপলোড হয়েছে!');
     } catch (err) {
       console.error("Upload error:", err);
-      alert("ছবি আপলোড করতে সমস্যা হয়েছে: " + err.message);
+      alert("ছবি আপলোড করতে সমস্যা হয়েছে: " + (err.message || err));
     } finally {
       uploadBtn.textContent = originalText;
       uploadBtn.disabled = false;
@@ -135,18 +143,28 @@ function showSection(id){
         credentials: 'include', // IMPORTANT: Send session cookie
         body: JSON.stringify({ image_data: dataURL })
       });
-      
-      const data = await response.json();
+
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Server returned non-JSON:", text);
+        throw new Error("Server Error (" + response.status + "): " + text.substring(0, 100));
+      }
       
       if (data.success) {
         await loadGalleryToUI();
+        return true;
       } else {
         console.error("Server error:", data);
         alert('ছবি যোগ করতে সমস্যা হয়েছে: ' + (data.message || 'Unknown error'));
+        return false;
       }
     } catch (error) {
       console.error('Error adding image:', error);
-      alert('ছবি যোগ করতে সমস্যা হয়েছে। সার্ভার লগ দেখুন।');
+      alert('ছবি যোগ করতে সমস্যা হয়েছে: ' + (error.message || 'Server connection failed'));
+      return false;
     }
   }
   
@@ -167,9 +185,9 @@ function showSection(id){
           img.onclick = () => openLightbox(item.image_data);
           
           const deleteBtn = document.createElement('button');
-          deleteBtn.textContent = '🗑️';
+          deleteBtn.innerHTML = '&times;';
           deleteBtn.className = 'poem-delete';
-          deleteBtn.style.cssText = 'position:absolute;top:0.5rem;right:0.5rem;padding:0.4rem 0.6rem;';
+          deleteBtn.title = 'Remove photo';
           deleteBtn.onclick = (e) => {
             e.stopPropagation();
             if(confirm('ছবি মুছে ফেলবেন?')){
