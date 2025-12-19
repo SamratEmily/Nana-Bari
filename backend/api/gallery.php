@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once '../config.php';
 
 // Check authentication
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
@@ -22,22 +22,13 @@ function logDebug($message) {
 
 // GET - Fetch all gallery images
 if ($method === 'GET') {
-    $result = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
+    $result = $conn->query("SELECT id, image_data, created_at FROM gallery ORDER BY created_at DESC");
     $images = [];
     
     while ($row = $result->fetch_assoc()) {
-        // Check if it's a file path or base64 (legacy support)
-        $src = $row['image_data'];
-        if (strpos($src, 'uploads/') === 0) {
-            // It's a file path, ensure we have the full URL
-            // Assuming the API is in backend/api/, we need to go up two levels to root
-            // But for the frontend, 'uploads/filename.jpg' is correct relative to index.html
-            $src = $src; 
-        }
-        
         $images[] = [
             'id' => $row['id'],
-            'image_data' => $src,
+            'image_data' => $row['image_data'], // Send base64 directly
             'created_at' => $row['created_at']
         ];
     }
@@ -47,54 +38,67 @@ if ($method === 'GET') {
 
 // POST - Add new image
 if ($method === 'POST') {
+    $contentLength = $_SERVER['CONTENT_LENGTH'] ?? 0;
+    logDebug("POST request received. Content-Length: " . $contentLength);
+
     $rawInput = file_get_contents('php://input');
+    
+    if (empty($rawInput)) {
+        $msg = 'Upload failed: Request body is empty.';
+        if ($contentLength > 0) {
+            $msg .= ' This usually means the file size exceeds the server limit (post_max_size).';
+        }
+        logDebug($msg);
+        sendResponse(false, $msg);
+    }
+
     $input = json_decode($rawInput, true);
     
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $msg = 'Invalid JSON data: ' . json_last_error_msg();
+        logDebug($msg);
+        sendResponse(false, $msg);
+    }
+    
     if (!isset($input['image_data'])) {
+        logDebug('Image data missing in request');
         sendResponse(false, 'Image data is required');
     }
     
     $imageData = $input['image_data'];
+    logDebug("Image data received. Length: " . strlen($imageData));
     
-    // Check if it's a base64 string
-    if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
-        $data = substr($imageData, strpos($imageData, ',') + 1);
-        $type = strtolower($type[1]); // jpg, png, gif
-        
-        if (!in_array($type, [ 'jpg', 'jpeg', 'gif', 'png', 'webp' ])) {
-            sendResponse(false, 'Invalid image type');
-        }
-        
-        $data = base64_decode($data);
-        
-        if ($data === false) {
-            sendResponse(false, 'Base64 decode failed');
-        }
-        
-        // Generate unique filename
-        $filename = uniqid() . '.' . $type;
-        $filePath = '../../uploads/' . $filename; // Relative to backend/api/
-        $dbPath = 'uploads/' . $filename; // Relative to index.html
-        
-        // Save to file
-        if (file_put_contents($filePath, $data)) {
-            // Save path to database
-            $stmt = $conn->prepare("INSERT INTO gallery (image_data) VALUES (?)");
-            $stmt->bind_param("s", $dbPath);
-            
-            if ($stmt->execute()) {
-                sendResponse(true, 'Image uploaded successfully', ['id' => $conn->insert_id, 'path' => $dbPath]);
-            } else {
-                // Cleanup file if DB insert fails
-                unlink($filePath);
-                sendResponse(false, 'Database error: ' . $stmt->error);
-            }
-        } else {
-            sendResponse(false, 'Failed to save file to disk');
-        }
-    } else {
-        sendResponse(false, 'Invalid image data format');
+    // Validate base64 image
+    if (!preg_match('/^data:image\/(\w+);base64,/', $imageData)) {
+        logDebug('Invalid image format regex match failed');
+        sendResponse(false, 'Invalid image format. Must be base64 encoded.');
     }
+    
+    // Insert into database
+    $stmt = $conn->prepare("INSERT INTO gallery (image_data) VALUES (?)");
+    
+    if (!$stmt) {
+        logDebug('Database prepare error: ' . $conn->error);
+        sendResponse(false, 'Database prepare error: ' . $conn->error);
+    }
+    
+    // Bind as string (LONGTEXT)
+    $stmt->bind_param("s", $imageData);
+    
+    if ($stmt->execute()) {
+        logDebug('Image uploaded successfully. ID: ' . $conn->insert_id);
+        sendResponse(true, 'Image uploaded successfully', ['id' => $conn->insert_id]);
+    } else {
+        logDebug('Database execute error: ' . $stmt->error);
+        // Check for packet size error
+        if (strpos($stmt->error, 'max_allowed_packet') !== false) {
+            sendResponse(false, 'Image is too large for the database. Please compress it further.');
+        } else {
+            sendResponse(false, 'Database error: ' . $stmt->error);
+        }
+    }
+    
+    $stmt->close();
 }
 
 // DELETE - Remove image
